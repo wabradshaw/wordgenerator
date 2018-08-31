@@ -1,5 +1,7 @@
 package com.wabradshaw.ml.wordgenerator;
 
+import com.wabradshaw.ml.wordgenerator.tokenisation.LexemeTokeniser;
+import com.wabradshaw.ml.wordgenerator.tokenisation.PhonemeTokeniser;
 import com.wabradshaw.ml.wordgenerator.tokenisation.Tokeniser;
 import org.deeplearning4j.nn.conf.BackpropType;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
@@ -70,12 +72,11 @@ public class NetworkConfiguration {
      * @return A {@link Tokeniser}
      */
     private Tokeniser buildTokeniser(Mode mode, String[] tokenSet){
-        //TODO
         switch(mode){
             case LEXEMES:
-                return null;
+                return new LexemeTokeniser(tokenSet);
             case PHONEMES:
-                return null;
+                return new PhonemeTokeniser(tokenSet);
             default:
                 throw new IllegalArgumentException("Please supply an operation Mode.");
         }
