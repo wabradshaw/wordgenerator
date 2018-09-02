@@ -2,6 +2,7 @@ package com.wabradshaw.ml.wordgenerator;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
 
 /**
  * Main which allows you to train a neural network, including generating samples, and saves the output as a
@@ -19,7 +20,7 @@ public class TrainingMain {
         // Load file
         // Split file
         // Tokenize
-        INDArray tokens = config.getTokeniser().getTokens();
+        DataSet tokens = config.getTokeniser().getTokens();
 
         // Create iterator
         // Train

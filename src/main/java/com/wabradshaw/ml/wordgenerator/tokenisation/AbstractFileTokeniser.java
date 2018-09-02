@@ -1,41 +1,62 @@
 package com.wabradshaw.ml.wordgenerator.tokenisation;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class AbstractFileTokeniser implements Tokeniser {
 
-    private static final String FILENAME = "phonemes.txt";
+    private static final String FILENAME = "/phonemes.txt";
     private static final int IGNORED_LINES = 126;
+    private static final int MAX_LENGTH = 30;
+
     protected final String[] possibleTokens;
+    protected final Map<String, Integer> tokenToIndexMap;
 
     public AbstractFileTokeniser(String[] possibleTokens){
         this.possibleTokens = possibleTokens;
+        this.tokenToIndexMap = new HashMap<>();
+
+        for(int i = 0; i < this.possibleTokens.length; i++){
+            tokenToIndexMap.put(this.possibleTokens[i], i);
+        }
     }
+
 
     @Override
-    public INDArray getTokens() {
+    public DataSet getTokens() {
         List<String> contents = loadFile();
-        // Remove bad lines
 
-        // Split according to implementation
-        // Tokenise according to implementation
+        List<List<Integer>> tokens = contents.parallelStream()
+                                             .map(this::getRelevantWord)
+                                             .filter(x -> x != null)
+                                             .map(this::toTokens)
+                                             .collect(Collectors.toList());
 
-        // Vectorise
-        // Convert to INDArray
-        return null;
+        List<List<Integer>> mask = tokens.stream()
+                                         .map(line -> line.stream()
+                                                          .map(c -> c < 0 ? 0 : 1)
+                                                          .collect(Collectors.toList())
+                                         )
+                                         .collect(Collectors.toList());
+
+        return createDataSet(tokens, mask);
     }
+
+    protected abstract String getRelevantWord(String line);
+
+    protected abstract List<Integer> toTokens(String word);
 
     private List<String> loadFile(){
         try {
             List<String> results = new ArrayList<>();
 
-            File file = new File(this.getClass().getResource("/phonemes.txt").getFile());
+            File file = new File(this.getClass().getResource(FILENAME).getFile());
             Scanner scanner = new Scanner(file);
 
             int lineNumber = 0;
@@ -52,6 +73,31 @@ public abstract class AbstractFileTokeniser implements Tokeniser {
         } catch(FileNotFoundException e){
             throw new RuntimeException("Phonemes file could not be found.", e);
         }
+    }
 
+    private DataSet createDataSet(List<List<Integer>> tokens, List<List<Integer>> mask){
+        //TODO - Work out why vector is Line / Token / Pos in String, instead of swapping those last two
+        INDArray input = Nd4j.zeros(new int[]{tokens.size(), possibleTokens.length, MAX_LENGTH + 1}, 'f');
+        INDArray labels = Nd4j.zeros(new int[]{tokens.size(), possibleTokens.length, MAX_LENGTH + 1}, 'f');
+        INDArray inputMask = Nd4j.zeros(new int[]{tokens.size(), MAX_LENGTH + 1}, 'f');
+        INDArray labelsMask = Nd4j.zeros(new int[]{tokens.size(), MAX_LENGTH + 1}, 'f');
+
+        for(int entryId = 0; entryId < tokens.size(); entryId ++){
+            List<Integer> entry = tokens.get(entryId);
+
+            input.putScalar(new int[]{entryId, 0, 0}, 1.0);
+            inputMask.putScalar(new int[]{entryId, 0}, 1.0);
+
+            int maxLength = Math.min(entry.size(), MAX_LENGTH);
+            for(int charId = 0; charId < maxLength; charId++){
+                int c = entry.get(charId);
+                input.putScalar(new int[]{entryId, c ,charId + 1}, 1.0);
+                labels.putScalar(new int[]{entryId, c ,charId}, 1.0);
+                inputMask.putScalar(new int[]{entryId,charId + 1}, 1.0);
+                labelsMask.putScalar(new int[]{entryId, charId}, 1.0);
+            }
+        }
+
+        return new DataSet(input,labels, inputMask, labelsMask);
     }
 }
