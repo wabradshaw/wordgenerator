@@ -11,6 +11,9 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Random;
 
 /**
@@ -24,12 +27,14 @@ public class TrainingMain {
     private static final int LAYER_SIZE = 200;
     private static final double LEARNING_RATE = 0.2;
 
-    private static final int EPOCHS = 1000;
+    private static final int EPOCHS = 100;
     private static final int SAMPLES = 10;
     private static final int SAMPLE_FREQUENCY = 10;
     private static final int SEED = 1234;
 
     public static void main(String[] args) throws Exception {
+
+        LocalDateTime start = LocalDateTime.now();
 
         NetworkConfiguration config = new NetworkConfiguration(MODE, TOKEN_SET, LAYER_SIZE, LEARNING_RATE, SEED);
 
@@ -42,10 +47,14 @@ public class TrainingMain {
             network.fit(dataSet);
 
             if(epoch % SAMPLE_FREQUENCY == 0) {
-                System.out.println(" -- " + epoch + " --------------------------");
+                System.out.println("\n -- " + epoch + " --------------------------");
                 printSamples(SAMPLES, TOKEN_SET.length, network, config.getTokeniser());
+                System.out.println(" ---------------------------------\n");
             }
         }
+
+        LocalDateTime end = LocalDateTime.now();
+        System.out.println("Training took " + Duration.between(start, end).getSeconds() + " seconds");
 
         // TODO - Save Model
 
@@ -89,9 +98,18 @@ public class TrainingMain {
             output = network.rnnTimeStep(nextInput);	//Do one time step of forward pass
         }
 
+        String endToken = "$";
+
         // Print the result
         for(int i = 0 ; i < sampleCount; i++){
-            System.out.println(stringBuilders[i].toString());
+            String sample = stringBuilders[i].toString();
+            int length = sample.indexOf(endToken);
+            if(length > 0){
+                System.out.println(sample.substring(0, length));
+            } else {
+                System.out.println(sample);
+            }
+
         }
 
     }
