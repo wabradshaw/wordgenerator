@@ -16,6 +16,8 @@ import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Random;
 
 /**
@@ -58,7 +60,7 @@ public class TrainingMain {
         }
 
         LocalDateTime end = LocalDateTime.now();
-        System.out.println("Training took " + Duration.between(start, end).getSeconds() + " seconds");
+        printDuration(Duration.between(start, end));
 
         File locationToSave = new File(FILENAME + ".zip");      //Where to save the network. Note: the file is in .zip format - can be opened externally
         ModelSerializer.writeModel(network, locationToSave, false);
@@ -66,6 +68,19 @@ public class TrainingMain {
         // TODO - Save Model
 
         System.out.println("DONE");
+    }
+
+    private static void printDuration(Duration duration) {
+        String output = "Training took ";
+        long seconds = duration.getSeconds();
+        if(seconds > 7200){
+            output = output + (seconds / 3600) + " hours";
+        } else if (duration.getSeconds() > 120){
+            output = output + (seconds / 60) + " minutes";
+        } else {
+            output = output + duration.getSeconds() + " seconds";
+        }
+        System.out.println(output);
     }
 
     public static void printSamples(int sampleCount, int possibleTokenCount, MultiLayerNetwork network, Tokeniser tokeniser) {
