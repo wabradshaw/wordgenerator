@@ -15,4 +15,5 @@ public interface Tokeniser {
      */
     public DataSet getTokens();
 
+    public String getToken(int index);
 }
