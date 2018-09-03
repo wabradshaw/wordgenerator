@@ -7,10 +7,12 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.ui.api.UIServer;
 import org.deeplearning4j.ui.stats.StatsListener;
 import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
+import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -27,10 +29,12 @@ public class TrainingMain {
     private static final int LAYER_SIZE = 200;
     private static final double LEARNING_RATE = 0.2;
 
-    private static final int EPOCHS = 100;
+    private static final int EPOCHS = 500;
     private static final int SAMPLES = 10;
     private static final int SAMPLE_FREQUENCY = 10;
     private static final int SEED = 1234;
+
+    private static final String FILENAME = "src/main/resources/generatedModel";
 
     public static void main(String[] args) throws Exception {
 
@@ -56,12 +60,15 @@ public class TrainingMain {
         LocalDateTime end = LocalDateTime.now();
         System.out.println("Training took " + Duration.between(start, end).getSeconds() + " seconds");
 
+        File locationToSave = new File(FILENAME + ".zip");      //Where to save the network. Note: the file is in .zip format - can be opened externally
+        ModelSerializer.writeModel(network, locationToSave, false);
+
         // TODO - Save Model
 
         System.out.println("DONE");
     }
 
-    private static void printSamples(int sampleCount, int possibleTokenCount, MultiLayerNetwork network, Tokeniser tokeniser) {
+    public static void printSamples(int sampleCount, int possibleTokenCount, MultiLayerNetwork network, Tokeniser tokeniser) {
         INDArray initializationInput = Nd4j.zeros(sampleCount, possibleTokenCount, 1);
         for(int i = 0; i < sampleCount; i++){
             initializationInput.putScalar(new int[]{i, 0, 0}, 1.0);
