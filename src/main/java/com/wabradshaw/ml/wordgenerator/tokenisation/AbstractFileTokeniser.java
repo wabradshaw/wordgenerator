@@ -38,7 +38,7 @@ public abstract class AbstractFileTokeniser implements Tokeniser {
                                              .map(this::toTokens)
                                              .collect(Collectors.toList());
         //TODO REMOVE THIS!
-        tokens = tokens.subList(0, 1000);
+        tokens = tokens.subList(0, 100);
 
         List<List<Integer>> mask = tokens.stream()
                                          .map(line -> line.stream()
@@ -83,34 +83,45 @@ public abstract class AbstractFileTokeniser implements Tokeniser {
     }
 
     private DataSet createDataSet(List<List<Integer>> tokens, List<List<Integer>> mask){
-        //TODO - Work out why vector is Line / Token / Pos in String, instead of swapping those last two
         INDArray input = Nd4j.zeros(new int[]{tokens.size(), possibleTokens.length, MAX_LENGTH + 1}, 'f');
         INDArray labels = Nd4j.zeros(new int[]{tokens.size(), possibleTokens.length, MAX_LENGTH + 1}, 'f');
-        //INDArray inputMask = Nd4j.zeros(new int[]{tokens.size(), MAX_LENGTH + 1}, 'f');
-        //INDArray labelsMask = Nd4j.zeros(new int[]{tokens.size(), MAX_LENGTH + 1}, 'f');
+        INDArray inputMask = Nd4j.zeros(new int[]{tokens.size(), MAX_LENGTH + 1}, 'f');
+        INDArray labelsMask = Nd4j.zeros(new int[]{tokens.size(), MAX_LENGTH + 1}, 'f');
 
         for(int entryId = 0; entryId < tokens.size(); entryId ++){
             List<Integer> entry = tokens.get(entryId);
 
             input.putScalar(new int[]{entryId, 0, 0}, 1.0);
-            //inputMask.putScalar(new int[]{entryId, 0}, 1.0);
+            inputMask.putScalar(new int[]{entryId, 0}, 1.0);
 
             int maxLength = Math.min(entry.size(), MAX_LENGTH);
             for(int charId = 0; charId < maxLength; charId++){
                 int c = entry.get(charId);
-                input.putScalar(new int[]{entryId, c ,charId + 1}, 1.0);
-                labels.putScalar(new int[]{entryId, c ,charId}, 1.0);
-                //inputMask.putScalar(new int[]{entryId,charId + 1}, 1.0);
-                //labelsMask.putScalar(new int[]{entryId, charId}, 1.0);
+                input.putScalar(new int[]{entryId, c, charId + 1}, 1.0);
+                labels.putScalar(new int[]{entryId, c, charId}, 1.0);
+                inputMask.putScalar(new int[]{entryId, charId + 1}, 1.0);
+                labelsMask.putScalar(new int[]{entryId, charId}, 1.0);
             }
 
-            for(int charId = entry.size(); charId < MAX_LENGTH; charId++){
-                input.putScalar(new int[]{entryId, 1 ,charId + 1}, 1.0);
-                labels.putScalar(new int[]{entryId, 1 ,charId}, 1.0);
+            // Add the end of file character (without masking) once the word is finished
+            if(entry.size() < MAX_LENGTH){
+                input.putScalar(new int[]{entryId, 1, entry.size() + 1}, 1.0);
+                labels.putScalar(new int[]{entryId, 1, entry.size()}, 1.0);
+                inputMask.putScalar(new int[]{entryId, entry.size() + 1}, 1.0);
+                labelsMask.putScalar(new int[]{entryId, entry.size()}, 1.0);
+            }
+
+            // Pad the output with masking characters
+            for(int charId = entry.size() + 1; charId < MAX_LENGTH; charId++){
+                input.putScalar(new int[]{entryId, 1, charId + 1}, 1.0);
+                labels.putScalar(new int[]{entryId, 1, charId}, 1.0);
+                inputMask.putScalar(new int[]{entryId, charId + 1}, 0);
+                labelsMask.putScalar(new int[]{entryId, charId}, 0);
             }
             labels.putScalar(new int[]{entryId, 1 ,MAX_LENGTH}, 1.0);
+            labelsMask.putScalar(new int[]{entryId, MAX_LENGTH}, 0);
         }
 
-        return new DataSet(input,labels);
+        return new DataSet(input, labels, inputMask, labelsMask);
     }
 }
