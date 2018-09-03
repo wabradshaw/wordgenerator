@@ -24,8 +24,9 @@ public class TrainingMain {
     private static final int LAYER_SIZE = 200;
     private static final double LEARNING_RATE = 0.2;
 
-    private static final int EPOCHS = 100;
+    private static final int EPOCHS = 1000;
     private static final int SAMPLES = 10;
+    private static final int SAMPLE_FREQUENCY = 10;
     private static final int SEED = 1234;
 
     public static void main(String[] args) throws Exception {
@@ -37,12 +38,13 @@ public class TrainingMain {
         DataSet dataSet = config.getTokeniser().getTokens();
         dataSet.shuffle(SEED);
 
-        for (int epoch = 0; epoch < EPOCHS; epoch++) {
-            network.clear();
+        for (int epoch = 0; epoch <= EPOCHS; epoch++) {
             network.fit(dataSet);
 
-            System.out.println(" -- " + epoch + " --------------------------");
-            printSamples(SAMPLES, TOKEN_SET.length, network, config.getTokeniser());
+            if(epoch % SAMPLE_FREQUENCY == 0) {
+                System.out.println(" -- " + epoch + " --------------------------");
+                printSamples(SAMPLES, TOKEN_SET.length, network, config.getTokeniser());
+            }
         }
 
         // TODO - Save Model

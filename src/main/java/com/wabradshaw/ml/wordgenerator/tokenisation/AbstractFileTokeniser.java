@@ -38,7 +38,7 @@ public abstract class AbstractFileTokeniser implements Tokeniser {
                                              .map(this::toTokens)
                                              .collect(Collectors.toList());
         //TODO REMOVE THIS!
-        tokens = tokens.subList(0, 5000);
+        tokens = tokens.subList(0, 1000);
 
         List<List<Integer>> mask = tokens.stream()
                                          .map(line -> line.stream()

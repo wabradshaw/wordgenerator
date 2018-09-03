@@ -92,7 +92,7 @@ public class NetworkConfiguration {
     private MultiLayerConfiguration buildConfig() {
         return new NeuralNetConfiguration.Builder()
                 .seed(seed)
-                .l2(0.001)
+                .l2(0.0001)
                 .weightInit(WeightInit.XAVIER)
                 .updater(new RmsProp(learningRate))
                 .list()
