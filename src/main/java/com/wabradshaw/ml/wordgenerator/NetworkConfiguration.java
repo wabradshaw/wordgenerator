@@ -64,7 +64,6 @@ public class NetworkConfiguration {
     public MultiLayerNetwork createNetwork(){
         MultiLayerNetwork network = new MultiLayerNetwork(this.config);
         network.init();
-        network.setListeners(new ScoreIterationListener(1));
         return network;
     }
 

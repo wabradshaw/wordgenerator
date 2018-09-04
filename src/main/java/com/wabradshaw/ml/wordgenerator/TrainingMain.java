@@ -1,12 +1,8 @@
 package com.wabradshaw.ml.wordgenerator;
 
 import com.wabradshaw.ml.wordgenerator.tokenisation.Tokeniser;
-import org.deeplearning4j.api.storage.StatsStorage;
-import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.deeplearning4j.ui.api.UIServer;
-import org.deeplearning4j.ui.stats.StatsListener;
-import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
+import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
@@ -15,9 +11,6 @@ import org.nd4j.linalg.factory.Nd4j;
 import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.Random;
 
 /**
@@ -31,12 +24,13 @@ public class TrainingMain {
     private static final int LAYER_SIZE = 200;
     private static final double LEARNING_RATE = 0.2;
 
-    private static final int EPOCHS = 500;
+    private static final int EPOCHS = 5;
     private static final int SAMPLES = 10;
     private static final int SAMPLE_FREQUENCY = 10;
     private static final int SEED = 1234;
 
-    private static final String FILENAME = "src/main/resources/generatedModel";
+    private static final String OUTPUT_FILENAME = "src/main/resources/generatedModel2";
+    private static final String EXISTING_NETWORK_FILENAME = "src/main/resources/generatedModel5000x1000";
 
     public static void main(String[] args) throws Exception {
 
@@ -44,7 +38,13 @@ public class TrainingMain {
 
         NetworkConfiguration config = new NetworkConfiguration(MODE, TOKEN_SET, LAYER_SIZE, LEARNING_RATE, SEED);
 
-        MultiLayerNetwork network = config.createNetwork();
+        MultiLayerNetwork network;
+        if(EXISTING_NETWORK_FILENAME == null) {
+            network = config.createNetwork();
+        } else {
+            network = ModelSerializer.restoreMultiLayerNetwork(EXISTING_NETWORK_FILENAME + ".zip");
+        }
+        network.setListeners(new ScoreIterationListener(1));
 
         DataSet dataSet = config.getTokeniser().getTokens();
         dataSet.shuffle(SEED);
@@ -62,10 +62,8 @@ public class TrainingMain {
         LocalDateTime end = LocalDateTime.now();
         printDuration(Duration.between(start, end));
 
-        File locationToSave = new File(FILENAME + ".zip");      //Where to save the network. Note: the file is in .zip format - can be opened externally
-        ModelSerializer.writeModel(network, locationToSave, false);
-
-        // TODO - Save Model
+        File locationToSave = new File(OUTPUT_FILENAME + ".zip");
+        ModelSerializer.writeModel(network, locationToSave, true);
 
         System.out.println("DONE");
     }
@@ -131,7 +129,6 @@ public class TrainingMain {
             } else {
                 System.out.println(sample);
             }
-
         }
 
     }
