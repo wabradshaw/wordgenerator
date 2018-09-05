@@ -11,6 +11,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Random;
 
 /**
@@ -24,18 +25,15 @@ public class TrainingMain {
     private static final int LAYER_SIZE = 200;
     private static final double LEARNING_RATE = 0.2;
 
-    private static final int EPOCHS = 5;
+    private static final int EPOCHS = 1500;
     private static final int SAMPLES = 10;
-    private static final int SAMPLE_FREQUENCY = 10;
+    private static final int SAMPLE_FREQUENCY = 50;
     private static final int SEED = 1234;
 
-    private static final String OUTPUT_FILENAME = "src/main/resources/generatedModel2";
+    private static final String OUTPUT_FILENAME = "src/main/resources/generatedModel5000x2500";
     private static final String EXISTING_NETWORK_FILENAME = "src/main/resources/generatedModel5000x1000";
 
     public static void main(String[] args) throws Exception {
-
-        LocalDateTime start = LocalDateTime.now();
-
         NetworkConfiguration config = new NetworkConfiguration(MODE, TOKEN_SET, LAYER_SIZE, LEARNING_RATE, SEED);
 
         MultiLayerNetwork network;
@@ -49,12 +47,16 @@ public class TrainingMain {
         DataSet dataSet = config.getTokeniser().getTokens();
         dataSet.shuffle(SEED);
 
+        LocalDateTime start = LocalDateTime.now();
+
         for (int epoch = 0; epoch <= EPOCHS; epoch++) {
             network.fit(dataSet);
 
             if(epoch % SAMPLE_FREQUENCY == 0) {
                 System.out.println("\n -- " + epoch + " --------------------------");
                 printSamples(SAMPLES, TOKEN_SET.length, network, config.getTokeniser());
+                System.out.println(" ---------------------------------\n");
+                printPredictedEndpoint(start, epoch, EPOCHS);
                 System.out.println(" ---------------------------------\n");
             }
         }
@@ -66,6 +68,15 @@ public class TrainingMain {
         ModelSerializer.writeModel(network, locationToSave, true);
 
         System.out.println("DONE");
+    }
+
+    private static void printPredictedEndpoint(LocalDateTime start, int epoch, int epochs) {
+        LocalDateTime now = LocalDateTime.now();
+        Duration taken = Duration.between(start, now);
+        double timePerEpoch = taken.getSeconds() * 1.0 / (epoch + 1);
+        double secondsLeft = (epochs - epoch) * timePerEpoch;
+        String end = now.plusSeconds((long)secondsLeft).format(DateTimeFormatter.ISO_DATE_TIME);
+        System.out.println("Predicted end: " + end);
     }
 
     private static void printDuration(Duration duration) {
