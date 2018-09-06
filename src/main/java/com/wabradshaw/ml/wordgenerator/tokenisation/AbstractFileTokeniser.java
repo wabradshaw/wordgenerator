@@ -13,7 +13,7 @@ public abstract class AbstractFileTokeniser implements Tokeniser {
 
     private static final String FILENAME = "/phonemes.txt";
     private static final int IGNORED_LINES = 126;
-    private static final int MAX_LENGTH = 30;
+    protected static final int MAX_LENGTH = 14;
 
     protected final String[] possibleTokens;
     protected final Map<String, Integer> tokenToIndexMap;
@@ -38,7 +38,7 @@ public abstract class AbstractFileTokeniser implements Tokeniser {
                                              .map(this::toTokens)
                                              .collect(Collectors.toList());
         //TODO REMOVE THIS!
-        tokens = tokens.subList(0, 100);
+        tokens = tokens.subList(0, 5000);
 
         List<List<Integer>> mask = tokens.stream()
                                          .map(line -> line.stream()

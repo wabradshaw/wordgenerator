@@ -13,6 +13,10 @@ public class LexemeTokeniser extends AbstractFileTokeniser {
     @Override
     protected String getRelevantWord(String line) {
         String word = line.split(" ")[0];
+        if(word.length() > MAX_LENGTH){
+            return null;
+        }
+
         for(String letter : word.split("")){
             if (!this.tokenToIndexMap.containsKey(letter)) {
                 return null;
