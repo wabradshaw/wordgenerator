@@ -110,7 +110,7 @@ public class NetworkConfiguration {
                                                  .nIn(layerSize)
                                                  .nOut(tokenSet.length)
                                                  .build())
-                .backpropType(BackpropType.TruncatedBPTT).tBPTTLength(30)
+                .backpropType(BackpropType.TruncatedBPTT).tBPTTLength(5)
                 .pretrain(false).backprop(true)
                 .build();
     }
