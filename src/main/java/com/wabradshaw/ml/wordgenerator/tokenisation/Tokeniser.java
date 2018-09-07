@@ -13,7 +13,7 @@ public interface Tokeniser {
      *
      * @return
      */
-    public DataSet getTokens();
+    public DataSet getTokens(int batchNumber, int batchSize);
 
     public String getToken(int index);
 }

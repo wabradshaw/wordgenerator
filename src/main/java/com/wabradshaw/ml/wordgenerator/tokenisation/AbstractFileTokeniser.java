@@ -17,6 +17,7 @@ public abstract class AbstractFileTokeniser implements Tokeniser {
 
     protected final String[] possibleTokens;
     protected final Map<String, Integer> tokenToIndexMap;
+    protected final String[] contents;
 
     public AbstractFileTokeniser(String[] possibleTokens){
         this.possibleTokens = possibleTokens;
@@ -25,20 +26,23 @@ public abstract class AbstractFileTokeniser implements Tokeniser {
         for(int i = 0; i < this.possibleTokens.length; i++){
             tokenToIndexMap.put(this.possibleTokens[i], i);
         }
+        contents = loadFile();
     }
 
 
     @Override
-    public DataSet getTokens() {
-        List<String> contents = loadFile();
+    public DataSet getTokens(int batchNumber, int batchSize) {
 
-        List<List<Integer>> tokens = contents.parallelStream()
-                                             .map(this::getRelevantWord)
-                                             .filter(x -> x != null)
-                                             .map(this::toTokens)
-                                             .collect(Collectors.toList());
-        //TODO REMOVE THIS!
-        tokens = tokens.subList(0, 5000);
+        String[] batchContents = Arrays.copyOfRange(this.contents,
+                                                    batchNumber*batchSize,
+                                                    batchNumber*batchSize + batchSize);
+
+        List<List<Integer>> tokens = Arrays.stream(batchContents)
+                                           .filter(x -> x != null)
+                                           .map(this::getRelevantWord)
+                                           .filter(x -> x != null)
+                                           .map(this::toTokens)
+                                           .collect(Collectors.toList());
 
         List<List<Integer>> mask = tokens.stream()
                                          .map(line -> line.stream()
@@ -59,20 +63,31 @@ public abstract class AbstractFileTokeniser implements Tokeniser {
 
     protected abstract List<Integer> toTokens(String word);
 
-    private List<String> loadFile(){
+    private String[] loadFile(){
         try {
-            List<String> results = new ArrayList<>();
-
             File file = new File(this.getClass().getResource(FILENAME).getFile());
+
+            Scanner lineCounter = new Scanner(file);
+            int lineCount = 0;
+            while(lineCounter.hasNextLine()){
+                lineCounter.nextLine();
+                lineCount++;
+            }
+
             Scanner scanner = new Scanner(file);
 
+            String[] results = new String[lineCount - IGNORED_LINES];
+
+            int ignoredNumber = 0;
             int lineNumber = 0;
             while(scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                if(lineNumber >= IGNORED_LINES){
-                    results.add(line);
+                if(ignoredNumber >= IGNORED_LINES){
+                    results[lineNumber] = line;
+                    lineNumber++;
+                } else {
+                    ignoredNumber++;
                 }
-                lineNumber++;
             }
 
             return results;
