@@ -25,8 +25,10 @@ public class GenerationMain {
 
     public static void main(String[] args) throws Exception {
 
-        MultiLayerNetwork restored = ModelSerializer.restoreMultiLayerNetwork(FILENAME + ".zip");
+        WordGenerator wordGenerator = new WordGenerator(TOKEN_SET);
 
-        TrainingMain.printSamples(WORDS, TOKEN_SET.getLength(), restored, TOKEN_SET.getTokeniser());
+        MultiLayerNetwork network = ModelSerializer.restoreMultiLayerNetwork(FILENAME + ".zip");
+
+        wordGenerator.generate(WORDS, network).forEach(System.out::println);
     }
 }
