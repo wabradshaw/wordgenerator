@@ -18,16 +18,15 @@ import java.util.Random;
  */
 public class GenerationMain {
 
-    private static final Mode MODE = Mode.LEXEMES;
-    private static final String[] TOKEN_SET = NetworkConfiguration.CHARS_EN_CAPS_WITH_COMMON;
+    private static final TokenSet TOKEN_SET = TokenSet.CHARS_EN_CAPS_WITH_COMMON;
 
-    private static final String FILENAME = "src/main/resources/generatedModel";
+    private static final String FILENAME = "src/main/resources/generatedModel5000x3000";
     private static final int WORDS = 30;
 
     public static void main(String[] args) throws Exception {
 
         MultiLayerNetwork restored = ModelSerializer.restoreMultiLayerNetwork(FILENAME + ".zip");
 
-        TrainingMain.printSamples(WORDS, TOKEN_SET.length, restored, new LexemeTokeniser(TOKEN_SET));
+        TrainingMain.printSamples(WORDS, TOKEN_SET.getLength(), restored, TOKEN_SET.getTokeniser());
     }
 }

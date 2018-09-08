@@ -1,36 +1,39 @@
 package com.wabradshaw.ml.wordgenerator.tokenisation;
 
+import com.wabradshaw.ml.wordgenerator.TokenSet;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class LexemeTokeniser extends AbstractFileTokeniser {
+public class LexemeTokeniser extends AbstractTokeniser {
 
-    public LexemeTokeniser(String[] possibleTokens) {
-        super(possibleTokens);
+    private static final int MAX_LENGTH = 14;
+
+    public LexemeTokeniser(TokenSet tokenSet) {
+        super(tokenSet);
     }
 
     @Override
-    protected String getRelevantWord(String line) {
+    public String getRelevantWord(String line) {
         String word = line.split(" ")[0];
-        if(word.length() > MAX_LENGTH){
-            return null;
-        }
 
+        //Ignore words (return null) that contain unknown characters
         for(String letter : word.split("")){
-            if (!this.tokenToIndexMap.containsKey(letter)) {
+            if (!knownSymbol(letter)) {
                 return null;
             }
         }
+
         return word;
     }
 
     @Override
-    protected List<Integer> toTokens(String word) {
+    public List<Integer> tokenise(String word) {
 
         String[] letters = word.split("");
         return Arrays.stream(letters)
-              .map(x -> this.tokenToIndexMap.get(x))
+              .map(this::toToken)
               .collect(Collectors.toList());
     }
 }

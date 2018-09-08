@@ -1,20 +1,22 @@
 package com.wabradshaw.ml.wordgenerator.tokenisation;
 
+import com.wabradshaw.ml.wordgenerator.TokenSet;
+
 import java.util.List;
 
-public class PhonemeTokeniser extends AbstractFileTokeniser {
+public class PhonemeTokeniser extends AbstractTokeniser {
 
-    public PhonemeTokeniser(String[] possibleTokens) {
-        super(possibleTokens);
+    public PhonemeTokeniser(TokenSet tokenSet) {
+        super(tokenSet);
     }
 
     @Override
-    protected List<Integer> toTokens(String word) {
+    public List<Integer> tokenise(String word) {
         return null;
     }
 
     @Override
-    protected String getRelevantWord(String line) {
+    public String getRelevantWord(String line) {
         return null;
     }
 }

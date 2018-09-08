@@ -19,8 +19,8 @@ import java.util.Random;
  */
 public class TrainingMain {
 
-    private static final Mode MODE = Mode.LEXEMES;
-    private static final String[] TOKEN_SET = NetworkConfiguration.CHARS_EN_CAPS_WITH_COMMON;
+    private static final TokenSet TOKEN_SET = TokenSet.CHARS_EN_CAPS_WITH_COMMON;
+    private static final int MAX_WORD_LENGTH = 14;
 
     private static final int LAYER_SIZE = 200;
     private static final double LEARNING_RATE = 0.1;
@@ -30,13 +30,14 @@ public class TrainingMain {
     private static final int BATCH_SIZE = 5350;
     private static final int SAMPLES = 10;
     private static final int SAMPLE_FREQUENCY = 50;
+
     private static final int SEED = 1234;
 
     private static final String OUTPUT_FILENAME = "src/main/resources/generatedModelV2x100";
     private static final String EXISTING_NETWORK_FILENAME = null;//"src/main/resources/generatedModelPartial5000x10000";
 
     public static void main(String[] args) throws Exception {
-        NetworkConfiguration config = new NetworkConfiguration(MODE, TOKEN_SET, LAYER_SIZE, LEARNING_RATE, SEED);
+        NetworkConfiguration config = new NetworkConfiguration(TOKEN_SET, LAYER_SIZE, LEARNING_RATE, SEED);
 
         MultiLayerNetwork network;
         if(EXISTING_NETWORK_FILENAME == null) {
@@ -46,18 +47,21 @@ public class TrainingMain {
         }
         network.setListeners(new ScoreIterationListener(1));
 
+        Tokeniser tokeniser = TOKEN_SET.getTokeniser();
+        DataSetGenerator dataSetGenerator = new DataSetGenerator(TOKEN_SET);
+
         LocalDateTime start = LocalDateTime.now();
 
         for (int epoch = 0; epoch < EPOCHS; epoch++) {
             for(int batch = 0; batch < BATCHES; batch++) {
-                DataSet dataSet = config.getTokeniser().getTokens(batch, BATCH_SIZE);
+                DataSet dataSet = dataSetGenerator.getDataSet(batch, BATCH_SIZE, MAX_WORD_LENGTH);
                 dataSet.shuffle(SEED);
                 network.fit(dataSet);
             }
 
             if(epoch % SAMPLE_FREQUENCY == 0) {
                 System.out.println("\n -- " + epoch + " --------------------------");
-                printSamples(SAMPLES, TOKEN_SET.length, network, config.getTokeniser());
+                printSamples(SAMPLES, TOKEN_SET.getLength(), network, tokeniser);
                 System.out.println(" ---------------------------------");
                 printPredictedEndpoint(start, epoch, EPOCHS);
                 System.out.println(" ---------------------------------\n");
@@ -67,7 +71,7 @@ public class TrainingMain {
         LocalDateTime end = LocalDateTime.now();
 
         System.out.println("\n -- FINAL --------------------------");
-        printSamples(SAMPLES, TOKEN_SET.length, network, config.getTokeniser());
+        printSamples(SAMPLES, TOKEN_SET.getLength(), network, tokeniser);
         System.out.println(" -----------------------------------");
 
 
@@ -116,7 +120,7 @@ public class TrainingMain {
             stringBuilders[i] = new StringBuilder();
         }
 
-        for( int charId=0; charId<30; charId++ ){
+        for( int charId=0; charId<possibleTokenCount; charId++ ){
             //Set up next input (single time step) by sampling from previous output
             INDArray nextInput = Nd4j.zeros(sampleCount, possibleTokenCount, 1);
 
@@ -130,7 +134,7 @@ public class TrainingMain {
 
                 int sampledCharacterId = sampleFromDistribution(outputProbDistribution, rng);
 
-                stringBuilders[sampleId].append(tokeniser.getToken(sampledCharacterId));
+                stringBuilders[sampleId].append(tokeniser.toSymbol(sampledCharacterId));
 
                 nextInput.putScalar(new int[]{sampleId, sampledCharacterId, 0}, 1.0);        //Prepare next time step input
             }

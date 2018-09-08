@@ -1,5 +1,6 @@
-package com.wabradshaw.ml.wordgenerator.tokenisation;
+package com.wabradshaw.ml.wordgenerator;
 
+import com.wabradshaw.ml.wordgenerator.tokenisation.Tokeniser;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
@@ -9,29 +10,22 @@ import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class AbstractFileTokeniser implements Tokeniser {
+public class DataSetGenerator {
 
     private static final String FILENAME = "/phonemes.txt";
     private static final int IGNORED_LINES = 126;
-    protected static final int MAX_LENGTH = 14;
 
-    protected final String[] possibleTokens;
-    protected final Map<String, Integer> tokenToIndexMap;
-    protected final String[] contents;
+    private final TokenSet tokenSet;
+    private final Tokeniser tokeniser;
+    private final String[] contents;
 
-    public AbstractFileTokeniser(String[] possibleTokens){
-        this.possibleTokens = possibleTokens;
-        this.tokenToIndexMap = new HashMap<>();
-
-        for(int i = 0; i < this.possibleTokens.length; i++){
-            tokenToIndexMap.put(this.possibleTokens[i], i);
-        }
-        contents = loadFile();
+    public DataSetGenerator(TokenSet tokenSet){
+        this.tokenSet = tokenSet;
+        this.tokeniser = tokenSet.getTokeniser();
+        this.contents = loadFile();
     }
 
-
-    @Override
-    public DataSet getTokens(int batchNumber, int batchSize) {
+    public DataSet getDataSet(int batchNumber, int batchSize, int maxWordLength) {
 
         String[] batchContents = Arrays.copyOfRange(this.contents,
                                                     batchNumber*batchSize,
@@ -39,9 +33,10 @@ public abstract class AbstractFileTokeniser implements Tokeniser {
 
         List<List<Integer>> tokens = Arrays.stream(batchContents)
                                            .filter(x -> x != null)
-                                           .map(this::getRelevantWord)
+                                           .map(tokeniser::getRelevantWord)
                                            .filter(x -> x != null)
-                                           .map(this::toTokens)
+                                           .map(tokeniser::tokenise)
+                                           .filter(x -> x.size() <= maxWordLength)
                                            .collect(Collectors.toList());
 
         List<List<Integer>> mask = tokens.stream()
@@ -51,17 +46,8 @@ public abstract class AbstractFileTokeniser implements Tokeniser {
                                          )
                                          .collect(Collectors.toList());
 
-        return createDataSet(tokens, mask);
+        return createDataSet(tokens, mask, maxWordLength);
     }
-
-    @Override
-    public String getToken(int index){
-        return this.possibleTokens[index];
-    }
-
-    protected abstract String getRelevantWord(String line);
-
-    protected abstract List<Integer> toTokens(String word);
 
     private String[] loadFile(){
         try {
@@ -97,44 +83,44 @@ public abstract class AbstractFileTokeniser implements Tokeniser {
         }
     }
 
-    private DataSet createDataSet(List<List<Integer>> tokens, List<List<Integer>> mask){
-        INDArray input = Nd4j.zeros(new int[]{tokens.size(), possibleTokens.length, MAX_LENGTH + 1}, 'f');
-        INDArray labels = Nd4j.zeros(new int[]{tokens.size(), possibleTokens.length, MAX_LENGTH + 1}, 'f');
-        INDArray inputMask = Nd4j.zeros(new int[]{tokens.size(), MAX_LENGTH + 1}, 'f');
-        INDArray labelsMask = Nd4j.zeros(new int[]{tokens.size(), MAX_LENGTH + 1}, 'f');
+    private DataSet createDataSet(List<List<Integer>> tokens, List<List<Integer>> mask, int maxWordLength){
+        INDArray input = Nd4j.zeros(new int[]{tokens.size(), tokenSet.getLength(), maxWordLength + 1}, 'f');
+        INDArray labels = Nd4j.zeros(new int[]{tokens.size(), tokenSet.getLength(), maxWordLength + 1}, 'f');
+        INDArray inputMask = Nd4j.zeros(new int[]{tokens.size(), maxWordLength + 1}, 'f');
+        INDArray labelsMask = Nd4j.zeros(new int[]{tokens.size(), maxWordLength + 1}, 'f');
 
         for(int entryId = 0; entryId < tokens.size(); entryId ++){
             List<Integer> entry = tokens.get(entryId);
 
-            input.putScalar(new int[]{entryId, 0, 0}, 1.0);
-            inputMask.putScalar(new int[]{entryId, 0}, 1.0);
+            input.putScalar(new int[]{entryId, 0, 0}, 1);
+            inputMask.putScalar(new int[]{entryId, 0}, 1);
 
-            int maxLength = Math.min(entry.size(), MAX_LENGTH);
-            for(int charId = 0; charId < maxLength; charId++){
+            int contentLength = Math.min(entry.size(), maxWordLength);
+            for(int charId = 0; charId < contentLength; charId++){
                 int c = entry.get(charId);
-                input.putScalar(new int[]{entryId, c, charId + 1}, 1.0);
-                labels.putScalar(new int[]{entryId, c, charId}, 1.0);
-                inputMask.putScalar(new int[]{entryId, charId + 1}, 1.0);
-                labelsMask.putScalar(new int[]{entryId, charId}, 1.0);
+                input.putScalar(new int[]{entryId, c, charId + 1}, 1);
+                labels.putScalar(new int[]{entryId, c, charId}, 1);
+                inputMask.putScalar(new int[]{entryId, charId + 1}, 1);
+                labelsMask.putScalar(new int[]{entryId, charId}, 1);
             }
 
             // Add the end of file character (without masking) once the word is finished
-            if(entry.size() < MAX_LENGTH){
-                input.putScalar(new int[]{entryId, 1, entry.size() + 1}, 1.0);
-                labels.putScalar(new int[]{entryId, 1, entry.size()}, 1.0);
-                inputMask.putScalar(new int[]{entryId, entry.size() + 1}, 1.0);
-                labelsMask.putScalar(new int[]{entryId, entry.size()}, 1.0);
+            if(contentLength < maxWordLength){
+                input.putScalar(new int[]{entryId, 1, contentLength + 1}, 1);
+                labels.putScalar(new int[]{entryId, 1, contentLength}, 1);
+                inputMask.putScalar(new int[]{entryId, contentLength + 1}, 1);
+                labelsMask.putScalar(new int[]{entryId, contentLength}, 1);
             }
 
             // Pad the output with masking characters
-            for(int charId = entry.size() + 1; charId < MAX_LENGTH; charId++){
-                input.putScalar(new int[]{entryId, 1, charId + 1}, 1.0);
-                labels.putScalar(new int[]{entryId, 1, charId}, 1.0);
+            for(int charId = entry.size() + 1; charId < maxWordLength; charId++){
+                input.putScalar(new int[]{entryId, 1, charId + 1}, 1);
+                labels.putScalar(new int[]{entryId, 1, charId}, 1);
                 inputMask.putScalar(new int[]{entryId, charId + 1}, 0);
                 labelsMask.putScalar(new int[]{entryId, charId}, 0);
             }
-            labels.putScalar(new int[]{entryId, 1 ,MAX_LENGTH}, 1.0);
-            labelsMask.putScalar(new int[]{entryId, MAX_LENGTH}, 0);
+            labels.putScalar(new int[]{entryId, 1 ,maxWordLength}, 1);
+            labelsMask.putScalar(new int[]{entryId, maxWordLength}, 0);
         }
 
         return new DataSet(input, labels, inputMask, labelsMask);
