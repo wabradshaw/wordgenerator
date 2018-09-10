@@ -1,18 +1,14 @@
 package com.wabradshaw.ml.wordgenerator;
 
-import com.wabradshaw.ml.wordgenerator.tokenisation.Tokeniser;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.util.ModelSerializer;
-import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
-import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Random;
 
 /**
  * Main which allows you to train a neural network, including generating samples, and saves the output as a zip file

@@ -1,8 +1,5 @@
 package com.wabradshaw.ml.wordgenerator;
 
-import com.wabradshaw.ml.wordgenerator.tokenisation.LexemeTokeniser;
-import com.wabradshaw.ml.wordgenerator.tokenisation.PhonemeTokeniser;
-import com.wabradshaw.ml.wordgenerator.tokenisation.Tokeniser;
 import org.deeplearning4j.nn.conf.BackpropType;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -10,7 +7,6 @@ import org.deeplearning4j.nn.conf.layers.LSTM;
 import org.deeplearning4j.nn.conf.layers.RnnOutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
-import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.learning.config.RmsProp;
 import org.nd4j.linalg.lossfunctions.LossFunctions;

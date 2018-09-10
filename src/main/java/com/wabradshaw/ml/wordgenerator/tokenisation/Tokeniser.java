@@ -1,8 +1,5 @@
 package com.wabradshaw.ml.wordgenerator.tokenisation;
 
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.dataset.DataSet;
-
 import java.util.List;
 
 /**

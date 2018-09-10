@@ -5,7 +5,6 @@ import com.wabradshaw.ml.wordgenerator.tokenisation.PhonemeTokeniser;
 import com.wabradshaw.ml.wordgenerator.tokenisation.Tokeniser;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public enum TokenSet {
     CHARS_EN_CAPS(x -> new LexemeTokeniser(x),
