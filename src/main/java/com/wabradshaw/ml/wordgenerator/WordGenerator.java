@@ -6,17 +6,26 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.DoubleStream;
 
 public class WordGenerator {
 
     private final Tokeniser tokeniser;
     private final int possibleTokenCount;
 
+    private final double minDistribution;
+
     public WordGenerator(TokenSet tokenSet) {
+        this(tokenSet, 0.0);
+    }
+
+    public WordGenerator(TokenSet tokenSet, double minDistribution) {
         this.tokeniser = tokenSet.getTokeniser();
         this.possibleTokenCount = tokenSet.getLength();
+        this.minDistribution = minDistribution;
     }
 
     public List<String> generate(int sampleCount, MultiLayerNetwork network) {
@@ -75,19 +84,21 @@ public class WordGenerator {
      * @param distribution Probability distribution over classes. Must sum to 1.0
      */
     public int sampleFromDistribution( double[] distribution, Random rng ){
-        double d = 0.0;
-        double sum = 0.0;
-        for( int t=0; t<10; t++ ) {
-            d = rng.nextDouble();
-            sum = 0.0;
-            for( int i=0; i<distribution.length; i++ ){
-                sum += distribution[i];
-                if( d <= sum ) return i;
+        double[] likelyDistribution = DoubleStream.of(distribution).map(x -> x >= minDistribution ? x : 0.0).toArray();
+        double total = DoubleStream.of(likelyDistribution).sum();
+
+        double target = 0.0;
+        double runningTotal = 0.0;
+
+        target = rng.nextDouble()*total;
+        runningTotal = 0.0;
+        for( int i=0; i < likelyDistribution.length; i++ ){
+            runningTotal += likelyDistribution[i];
+            if( target <= runningTotal ) {
+                return i;
             }
-            //If we haven't found the right index yet, maybe the sum is slightly
-            //lower than 1 due to rounding error, so try again.
         }
-        //Should be extremely unlikely to happen if distribution is a valid probability distribution
-        throw new IllegalArgumentException("Distribution is invalid? d="+d+", sum="+sum);
+
+        throw new RuntimeException("Couldn't find a valid possibility. Rolled " + target + " against a total of " + total);
     }
 }

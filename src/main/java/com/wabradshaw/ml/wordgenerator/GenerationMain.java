@@ -20,12 +20,13 @@ public class GenerationMain {
 
     private static final TokenSet TOKEN_SET = TokenSet.CHARS_EN_CAPS_WITH_COMMON;
 
-    private static final String FILENAME = "src/main/resources/generatedModel5000x3000";
-    private static final int WORDS = 30;
+    private static final String FILENAME = "src/main/resources/generatedModelV2x1200";
+    private static final int WORDS = 300;
+    private static final double MIN_LETTER_THRESHOLD = 0.01;
 
     public static void main(String[] args) throws Exception {
 
-        WordGenerator wordGenerator = new WordGenerator(TOKEN_SET);
+        WordGenerator wordGenerator = new WordGenerator(TOKEN_SET, MIN_LETTER_THRESHOLD);
 
         MultiLayerNetwork network = ModelSerializer.restoreMultiLayerNetwork(FILENAME + ".zip");
 

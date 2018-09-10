@@ -19,22 +19,22 @@ import java.util.Random;
  */
 public class TrainingMain {
 
-    private static final TokenSet TOKEN_SET = TokenSet.CHARS_EN_CAPS_WITH_COMMON;
-    private static final int MAX_WORD_LENGTH = 14;
+    private static final TokenSet TOKEN_SET = TokenSet.PHONEMES_ARPABET_SEPARATE_STRESSES;
+    private static final int MAX_WORD_LENGTH = 19;
 
     private static final int LAYER_SIZE = 200;
-    private static final double LEARNING_RATE = 0.1;
+    private static final double LEARNING_RATE = 0.2;
 
-    private static final int EPOCHS = 1000;
+    private static final int EPOCHS = 10;
     private static final int BATCHES = 25;
     private static final int BATCH_SIZE = 5350;
     private static final int SAMPLES = 10;
-    private static final int SAMPLE_FREQUENCY = 50;
+    private static final int SAMPLE_FREQUENCY = 1;
 
     private static final int SEED = 1234;
 
-    private static final String OUTPUT_FILENAME = "src/main/resources/generatedModelV2x100";
-    private static final String EXISTING_NETWORK_FILENAME = null;//"src/main/resources/generatedModelPartial5000x10000";
+    private static final String OUTPUT_FILENAME = "src/main/resources/generatedModelPhonemes";
+    private static final String EXISTING_NETWORK_FILENAME = null; //"src/main/resources/generatedModelV2x600";
 
     public static void main(String[] args) throws Exception {
         NetworkConfiguration config = new NetworkConfiguration(TOKEN_SET, LAYER_SIZE, LEARNING_RATE, SEED);
