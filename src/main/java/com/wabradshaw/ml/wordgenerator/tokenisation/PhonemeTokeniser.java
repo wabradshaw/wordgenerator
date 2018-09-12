@@ -39,4 +39,10 @@ public class PhonemeTokeniser extends AbstractTokeniser {
                      .map(this::toToken)
                      .collect(Collectors.toList());
     }
+
+    @Override
+    public String toSymbol(int token){
+        String base = super.toSymbol(token);
+        return " " + base;
+    }
 }
